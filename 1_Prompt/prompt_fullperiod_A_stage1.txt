@@ -1,0 +1,152 @@
+You are given a workforce-task assignment problem. The goal is to **maximize the assignment of high-priority tasks** to workers while satisfying all essential constraints.
+
+**CRITICAL**: Any assignment that violates the constraints below is INVALID.
+
+---
+
+## **Problem Setup**
+
+- **Multiple tasks** need to be assigned to **multiple workers** over **multiple time periods**
+- Each time period lasts **240 minutes (4 hours)**
+- Tasks have different durations measured in **periods** (1 period, 2 periods, 3 periods, etc.)
+- Tasks requiring multiple periods must be assigned to the same worker in consecutive periods
+- **Primary Objective**: Maximize total priority score = Σ(H - priority_level) × assigned_tasks
+  where H = 1 + maximum_priority_level
+
+---
+
+## **Input Data Structure**
+
+### **Tasks Array**
+Each task has:
+- **id**: Task identifier
+- **task_type**: Task type (e.g., "type_1", "type_2")
+- **priority**: Priority level (1=highest priority, higher numbers=lower priority)
+- **skills**: Required skill levels as key-value pairs
+  - Example: `{"skill_1": 4, "skill_3": 3}` means worker needs skill_1 ≥ 4 AND skill_3 ≥ 3
+- **duration**: Task duration in minutes (240, 480, 720, etc.)
+  - Convert to periods by dividing by 240: duration_periods = duration ÷ 240
+- **predecessors**: Array of task IDs that must be completed before this task can start
+- **deadline**: Latest period by which task should be completed
+
+### **Workers Array**
+Each worker has:
+- **id**: Worker identifier
+- **preference**: Array of preferred task types (e.g., ["type_1", "type_2"])
+- **skills**: Worker's skill levels as key-value pairs
+  - Example: `{"skill_1": 5, "skill_2": 2}` means worker has skill_1 at level 5, skill_2 at level 2
+- **min_utilisation**: Minimum utilization ratio (0.0 to 1.0)
+  - Convert to periods: min_periods = min_utilisation × total_available_periods
+- **max_utilisation**: Maximum utilization ratio (0.0 to 1.0)
+  - Convert to periods: max_periods = max_utilisation × total_available_periods
+- **unavailable**: Array of period indices when worker is not available
+
+
+---
+
+## **ESSENTIAL CONSTRAINTS (Must be satisfied)**
+
+### **1. TASK ASSIGNMENT CONSTRAINT**
+**Rule**: Each task can be assigned to at most one worker.
+- No task can be assigned to multiple workers
+- Tasks can remain unassigned if beneficial for the objective
+
+### **2. SKILL MATCHING CONSTRAINT**
+**Rule**: To be assigned a task, a worker must have all required skills at levels greater than or equal to the task’s required level for that skill.
+- For each skill required by the task, worker must possess that skill
+- Worker's skill level must be ≥ task's required level for that skill
+- Missing any required skill at required level makes the assignment INVALID
+
+### **3. WORKER CAPACITY CONSTRAINT**
+**Rule**: Each worker can work on at most one task per period.
+- No double-booking: worker cannot be assigned multiple tasks in same period
+- Applies to each individual period separately
+
+### **4. WORKER WORKLOAD BOUNDS**
+**Rule**: Each worker's total assigned periods must fall within their utilization bounds.
+- Calculate available_periods = total_periods - len(unavailable_periods)
+- min_periods = min_utilisation × available_periods
+- max_periods = max_utilisation × available_periods
+- Total assigned periods ≥ min_periods
+- Total assigned periods ≤ max_periods
+
+### **5. MULTI-PERIOD TASK CONSTRAINT**
+**Rule**: Tasks lasting multiple periods must be assigned consecutively.
+- All periods of a multi-period task assigned to same worker
+- Periods must be consecutive (no gaps)
+
+### **6. PRECEDENCE CONSTRAINT**
+**Rule**: Predecessor tasks must be completed before successor tasks can start.
+- If task A is predecessor of task B, A must finish before B starts
+- If both assigned to same worker: A's last period < B's first period
+- If assigned to different workers: A's last period < B's first period
+
+---
+
+## **ANALYSIS FRAMEWORK**
+
+Please conduct a systematic analysis following these steps:
+
+### **Step 1: Worker-Task Eligibility Analysis**
+1. **Skill Compatibility Check**:
+   - For each task, identify which workers have all required skills at sufficient levels
+   - Create eligibility matrix: Task × Worker → Eligible/Not Eligible
+   - Document reason for ineligibility (missing skills, insufficient levels)
+
+2. **Capacity Assessment**:
+   - For each worker, calculate available_periods = total_periods - len(unavailable)
+   - Convert utilisation bounds: min_periods = min_utilisation × available_periods, max_periods = max_utilisation × available_periods
+   - For each eligible worker-task pair, check if assignment fits within bounds
+   - Account for task duration requirements (duration ÷ 240 periods)
+
+### **Step 2: Priority and Precedence Analysis**
+1. **Priority Ranking**:
+   - List tasks in priority order (priority 1 = highest value)
+   - Calculate priority score contribution for each task: (H - priority_level)
+   - Identify high-value tasks that should be prioritized
+
+2. **Precedence Mapping**:
+   - Identify all precedence relationships
+   - Determine earliest possible start periods for each task
+   - Flag any circular dependencies or impossible precedence chains
+
+### **Step 3: Resource Conflict Identification**
+1. **Bottleneck Analysis**:
+   - Identify workers who are the only option for high-priority tasks
+   - Find tasks competing for the same scarce worker skills
+   - Assess capacity constraints vs. task demand
+
+2. **Trade-off Assessment**:
+   - Compare priority scores of competing tasks
+   - Evaluate impact of leaving certain tasks unassigned
+   - Consider workload balancing implications
+
+### **Step 4: Assignment Strategy Development**
+1. **Task Selection Strategy**:
+   - Propose which tasks to assign vs. leave unassigned
+   - Justify selections based on priority score maximization
+   - Address resource conflicts and bottlenecks
+
+2. **Scheduling Strategy**:
+   - Plan worker assignments across periods
+   - Ensure precedence constraints are satisfied
+   - Optimize for consecutive period allocation for multi-period tasks
+
+3. **Constraint Verification Plan**:
+   - Outline how to verify each constraint is satisfied
+   - Identify potential violation risks and mitigation strategies
+
+---
+
+## **OUTPUT REQUIREMENTS**
+
+Provide a comprehensive analysis following the framework above. Your output should be **detailed text analysis only** - do NOT provide JSON solution yet.
+
+Include:
+- Complete eligibility matrix with explanations
+- Priority-based task ranking and selection rationale
+- Worker assignment strategy with period-by-period planning
+- Constraint satisfaction verification approach
+- Trade-off decisions and their justifications
+
+**Focus on creating a clear, executable strategy that maximizes priority score while satisfying all constraints.**

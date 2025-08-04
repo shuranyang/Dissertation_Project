@@ -1,0 +1,161 @@
+## **DEMONSTRATION EXAMPLE**
+
+### **INPUT DATA**
+```json
+{
+  "tasks": [
+    {
+      "id": 1,
+      "task_type": "type_1",
+      "priority": 2,
+      "skills": {"skill_2": 3},
+      "duration": 240,
+      "predecessors": [],
+      "deadline": 6
+    },
+    {
+      "id": 2,
+      "task_type": "type_2",
+      "priority": 1,
+      "skills": {"skill_1": 1},
+      "duration": 480,
+      "predecessors": [1],
+      "deadline": 9
+    },
+    {
+      "id": 3,
+      "task_type": "type_2",
+      "priority": 3,
+      "skills": {"skill_2": 1},
+      "duration": 480,
+      "predecessors": [],
+      "deadline": 7
+    },
+    {
+      "id": 4,
+      "task_type": "type_2",
+      "priority": 1,
+      "skills": {"skill_2": 1},
+      "duration": 480,
+      "predecessors": [],
+      "deadline": 3
+    },
+    {
+      "id": 5,
+      "task_type": "type_1",
+      "priority": 2,
+      "skills": {"skill_1": 2, "skill_2": 1},
+      "duration": 720,
+      "predecessors": [4],
+      "deadline": 7
+    }
+  ],
+  "workers": [
+    {
+      "id": 1,
+      "preference": ["type_1"],
+      "skills": {"skill_1": 5, "skill_2": 2},
+      "min_utilisation": 0.07,
+      "max_utilisation": 0.96,
+      "unavailable": []
+    },
+    {
+      "id": 2,
+      "preference": ["type_2"],
+      "skills": {"skill_2": 4, "skill_1": 1},
+      "min_utilisation": 0.04,
+      "max_utilisation": 0.82,
+      "unavailable": []
+    },
+    {
+      "id": 3,
+      "preference": ["type_1"],
+      "skills": {"skill_1": 2, "skill_2": 2},
+      "min_utilisation": 0.0,
+      "max_utilisation": 1.0,
+      "unavailable": []
+    }
+  ],
+  "periods": [
+    {"index": 1, "duration": 240},
+    {"index": 2, "duration": 240},
+    {"index": 3, "duration": 240},
+    {"index": 4, "duration": 240},
+    {"index": 5, "duration": 240},
+    {"index": 6, "duration": 240},
+    {"index": 7, "duration": 240},
+    {"index": 8, "duration": 240},
+    {"index": 9, "duration": 240},
+    {"index": 10, "duration": 240},
+    {"index": 11, "duration": 240},
+    {"index": 12, "duration": 240},
+    {"index": 13, "duration": 240},
+    {"index": 14, "duration": 240},
+    {"index": 15, "duration": 240},
+    {"index": 16, "duration": 240},
+    {"index": 17, "duration": 240},
+    {"index": 18, "duration": 240},
+    {"index": 19, "duration": 240},
+    {"index": 20, "duration": 240}
+  ]
+}
+```
+
+### **EXPERT STRATEGY ANALYSIS**
+
+Looking at this assignment problem, I need to prioritize high-priority tasks while managing precedence constraints and worker capabilities.
+
+**Worker Capabilities Assessment:**
+- Worker 1: Strong in skill_1 (level 5), moderate skill_2 (level 2). Available all periods. Utilisation bounds: 1.4-19.2 periods (0.07-0.96 × 20).
+- Worker 2: Strong in skill_2 (level 4), basic skill_1 (level 1). Available all periods. Utilisation bounds: 0.8-16.4 periods (0.04-0.82 × 20).
+- Worker 3: Balanced skills (both at level 2). Available all periods. Utilisation bounds: 0-20 periods (0.0-1.0 × 20).
+
+**Task Duration and Priority Analysis:**
+- Task 1: 240 minutes = 1 period (priority 2) - needs skill_2≥3
+- Task 2: 480 minutes = 2 periods (priority 1) - needs skill_1≥1, must wait for Task 1
+- Task 3: 480 minutes = 2 periods (priority 3) - needs skill_2≥1
+- Task 4: 480 minutes = 2 periods (priority 1) - needs skill_2≥1, tight deadline (period 3)
+- Task 5: 720 minutes = 3 periods (priority 2) - needs skill_1≥2,skill_2≥1, must wait for Task 4
+
+**Precedence Constraints:**
+- Task 2 must wait for Task 1 to complete
+- Task 5 must wait for Task 4 to complete
+
+**Assignment Strategy:**
+1. **Task 4 (Priority 1, urgent deadline)**: With deadline in period 3, this needs immediate attention. Worker 1 can handle skill_2≥1 requirement. Assign to periods 2-3.
+
+2. **Task 1 (Priority 2, enables Task 2)**: Needs skill_2≥3. Only Worker 2 meets this requirement with skill_2=4. Assign to period 1 to enable Task 2.
+
+3. **Task 2 (Priority 1, depends on Task 1)**: After Task 1 completes in period 1, Task 2 can start. Worker 1 has the required skill_1≥1. Since Worker 1 is busy with Task 4 in periods 2-3, assign Task 2 to periods 6,8.
+
+4. **Task 5 (Priority 2, depends on Task 4)**: After Task 4 completes in period 3, Task 5 can start from period 4. Worker 3 meets both skill requirements (skill_1=2≥2, skill_2=2≥1). Assign to periods 4-6.
+
+5. **Task 3 (Priority 3, lowest priority)**: Worker 1 can handle skill_2≥1. Fill remaining capacity in periods 1,5.
+
+**Utilisation Check:**
+- Worker 1: 6 periods (within 1.4-19.2 bound) ✓
+- Worker 2: 1 period (within 0.8-16.4 bound) ✓  
+- Worker 3: 3 periods (within 0-20 bound) ✓
+
+**Final Assignments:**
+- Worker 1: Task 3 (periods 1,5), Task 4 (periods 2-3), Task 2 (periods 6,8)
+- Worker 2: Task 1 (period 1)
+- Worker 3: Task 5 (periods 4-6)
+
+### **SOLUTION OUTPUT**
+```json
+{
+  "worker_task_period_assignments": [
+    [2, 1, 1, 240.0],
+    [1, 3, 1, 240.0],
+    [1, 4, 2, 240.0],
+    [1, 4, 3, 240.0],
+    [3, 5, 4, 240.0],
+    [1, 3, 5, 240.0],
+    [3, 5, 5, 240.0],
+    [1, 2, 6, 240.0],
+    [3, 5, 6, 240.0],
+    [1, 2, 8, 240.0]
+  ]
+}
+```

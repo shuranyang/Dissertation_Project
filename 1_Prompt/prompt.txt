@@ -1,0 +1,179 @@
+You are given a workforce-task assignment problem following the **full-period model** approach. The goal is to **assign tasks to workers over 20 time periods** (each lasting 240 minutes) to **maximize the assignment of high-priority tasks**. Following are the information (problem formulation, input schema, constranits, optimization goal, output schema explanation) for you to understand the contexts, then please follow the Solution Strategy step by step to generate the output. **Remember, without fulfilling all the constraints, any outputs will be considered as invalid.**
+
+---
+
+## **Problem Formulation: Full-Period Model**
+
+This problem follows the full-period model where:
+- **Each period has exactly 240 minutes duration**
+- **Task durations are multiples of period duration** (240, 480, 720, 960, 1200 minutes)
+- **Tasks spanning multiple periods must be decomposed into consecutive period assignments**
+- **All period assignments for the same original task must be assigned to the same worker**
+
+---
+
+## **Input Schema**
+
+The input data follows a specific JSON schema with three main sections:
+
+### **Tasks Array**
+Each task object contains:
+- **id** (integer): Unique task identifier (1-20)
+- **task_type** (string): Task classification ("type_1", "type_2", "type_3")
+- **priority** (integer): Priority level where **1 = highest priority, 5 = lowest priority**
+- **skills** (object): Required skill levels as key-value pairs
+  - Keys: skill names ("skill_1", "skill_2", "skill_3", "skill_4", "skill_5")
+  - Values: minimum required skill level (integer)
+  - Example: `{"skill_1": 4, "skill_3": 3}` means worker needs skill_1 ≥ 4 AND skill_3 ≥ 3
+- **duration** (integer): Task duration in minutes (240, 480, 720, 960, or 1200)
+- **predecessors** (array): List of task IDs that must be completed before this task can start
+- **deadline** (integer): Period by which task must be fully completed (1-20)
+
+### **Workers Array**  
+Each worker object contains:
+- **id** (integer): Unique worker identifier (1-10)
+- **preference** (array): Ordered list of preferred task types (most preferred first)
+  - Example: `["type_1", "type_2", "type_3"]` means type_1 > type_2 > type_3
+- **skills** (object): Worker's skill levels as key-value pairs
+  - Keys: skill names ("skill_1", "skill_2", "skill_3", "skill_4", "skill_5")
+  - Values: worker's skill level (integer)
+  - Worker can perform task only if worker's skill level ≥ required level for ALL skills
+- **min_utilisation** (number): Minimum workload ratio (set to 0.0, not binding)
+- **max_utilisation** (number): Maximum workload ratio (set to 1.0, not binding)
+- **unavailable** (array): Periods when worker is unavailable (empty in this instance)
+
+### **Periods Array**
+Each period object contains:
+- **index** (integer): Period identifier (1-20)
+- **duration** (integer): Period duration in minutes (always 240)
+
+### **Key Rules**
+- **Skill matching**: Worker must meet/exceed ALL required skill levels
+- **Precedence**: Task cannot start until ALL predecessors are completed
+- **Deadline**: Task must be fully completed by its deadline period
+
+---
+
+## **Constraints (Strictly Enforced)**
+
+### **1. Skill Matching (Hard Constraint)**
+- Worker must possess ALL required skills at sufficient levels
+- **Critical**: Missing ANY skill or insufficient level = INVALID assignment
+
+**Step-by-step verification process:**
+1. List all required skills for the task
+2. For each required skill, check if worker has that skill
+3. For each skill the worker has, verify level ≥ required level
+4. Worker is eligible ONLY if ALL checks pass
+
+**Example**: Task needs `{"skill_1": 4, "skill_3": 3}`
+- Worker with `{"skill_1": 3, "skill_3": 5}` → INVALID (skill_1: 3 < 4)
+- Worker with `{"skill_2": 5}` → INVALID (missing skill_1 and skill_3)
+- Worker with `{"skill_1": 4, "skill_3": 3, "skill_2": 2}` → VALID (skill_1: 4≥4, skill_3: 3≥3)
+
+### **2. Precedence (Hard Constraint)**
+- Task cannot START until ALL predecessors are COMPLETED
+- **Completion timing**: Task ends at the end of its final period
+- **Start timing**: Task can start at the beginning of any period after predecessors complete
+- **Example**: 
+  - Task A (480min) runs periods 1-2, completes at END of period 2
+  - Task B with predecessor A can start earliest at BEGIN of period 3
+- **Multiple predecessors**: Wait for the LAST one to complete
+
+### **3. Deadline Constraints (Hard Constraint)**
+- Task must be FULLY COMPLETED by its deadline period
+- **Calculation**: Task starting period + duration periods ≤ deadline
+- **Example**: 
+  - Task (720min, deadline=10) needs 3 periods → latest start = period 8
+  - Starting period 9 → completes period 11 → VIOLATES deadline 10
+- **Invalid if**: No valid start period exists that meets deadline
+
+### **4. Worker Capacity (Hard Constraint)**
+- Each worker can work on MAXIMUM ONE task per period
+- **Multi-period tasks**: Worker is occupied for ALL consecutive periods
+- **Conflict detection**: Check all periods of multi-period task assignments
+- **Example**: Worker assigned Task A (periods 3-5) cannot take any task in periods 3, 4, or 5
+
+### **5. Task Uniqueness (Hard Constraint)**
+- Each task can be assigned to AT MOST ONE worker
+- **Cannot split**: Same task cannot be assigned to multiple workers
+- **All-or-nothing**: Either assign entire task or don't assign it
+
+### **6. Multi-Period Task Rules (Hard Constraint)**
+- **Task decomposition**: 240min→1 period, 480min→2 periods, 720min→3 periods, 960min→4 periods, 1200min→5 periods
+- **Same worker**: All periods of a task assigned to the same worker
+- **Consecutive periods**: No gaps between periods of the same task
+- **Complete assignment**: Must assign ALL required periods or none
+- **Example**: Task 6 (1200min) assigned to Worker 4 starting period 2 → periods 2,3,4,5,6 all to Worker 4
+
+---
+
+## **Optimization Goal**
+
+**Primary Objective**: Maximize the assignment of high-priority tasks
+- **Priority hierarchy**: 1 (highest) > 2 > 3 > 4 > 5 (lowest)
+- **Goal**: Assign as many priority 1 tasks as possible, then priority 2, etc.
+- **Focus**: Task completion over earliness (assign feasible tasks first)
+- **Note**: For this testing phase, ignore worker preferences and workload balancing
+
+---
+
+## **Output Schema Explanation**
+
+Provide your solution as an array of period assignments following the output schema provided. For each period where a worker works on a task, output:
+
+**[worker_id, task_id, period_id, 240.0]**
+
+**Multi-period task example**:
+If Worker 3 is assigned Task 11 (1200 minutes) starting period 1:
+```
+[3, 11, 1, 240.0]
+[3, 11, 2, 240.0]  
+[3, 11, 3, 240.0]
+[3, 11, 4, 240.0]
+[3, 11, 5, 240.0]
+```
+
+**Single-period task example**:
+If Worker 7 is assigned Task 1 (240 minutes) in period 3:
+```
+[7, 1, 3, 240.0]
+```
+
+---
+
+## **Solution Strategy (6 Steps)**
+
+1. **Preprocess & Filter**: 
+   - For each task, list ALL required skills and minimum levels
+   - For each worker, verify they possess ALL required skills at sufficient levels using the step-by-step process above
+   - Create "eligible worker list" for each task containing ONLY qualified workers
+   - Calculate earliest possible start time for each task based on predecessors
+   - Mark tasks with empty eligible worker lists as "impossible to assign"
+
+2. **Sort Tasks**: Order by priority (1→2→3→4→5), then by deadline urgency within each priority level
+
+3. **Assign with Validation**: 
+   - For each task in order, ONLY consider workers from its pre-validated eligible worker list
+   - Before finalizing any assignment, double-check that the worker has ALL required skills at sufficient levels
+   - Find the earliest feasible consecutive time slots for the worker
+   - Assign only if ALL constraints (skills, precedence, deadline, availability) are satisfied
+4. **Check Conflicts**: Verify no worker is assigned to multiple tasks in the same period
+5. **Validate Constraints**: Confirm all assignments satisfy skills, precedence, deadlines, and multi-period rules
+6. **Finalize Solution**: Generate final assignment list with all valid allocations
+
+---
+
+## **Key Validation Points**
+
+### **Essential Checks Before Every Assignment:**
+- **Skills**: Worker must have ALL required skills at sufficient levels (use step-by-step verification)
+- **Eligible List**: Only assign workers from the task's pre-validated eligible worker list
+- **Timing**: Task completion period ≤ deadline period  
+- **Precedence**: All predecessors completed before task starts
+- **Availability**: Worker free for all required consecutive periods
+- **Bounds**: All periods ≤ 20
+
+**Remember**: Task completes at END of final period. Multi-period tasks need consecutive periods with same worker.
+
+**CRITICAL**: Never assign a task to a worker who is not on that task's eligible worker list.

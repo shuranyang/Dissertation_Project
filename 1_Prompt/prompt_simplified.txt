@@ -1,0 +1,122 @@
+You are given a workforce-task assignment problem. The goal is to **assign tasks to workers** while satisfying **essential constraints**. 
+
+**CRITICAL**: Any assignment that violates the constraints below is INVALID.
+
+---
+
+## **Problem Setup**
+
+- **5 tasks** need to be assigned to **3 workers** over **10 time periods**
+- Each time period lasts **240 minutes**
+- Tasks have different durations: 240, 480, or 720 minutes
+- Tasks requiring multiple periods must be assigned to the same worker in consecutive periods
+
+---
+
+## **Input Data Structure**
+
+### **Tasks Array**
+Each task has:
+- **id**: Task identifier (1-5)
+- **skills**: Required skill levels as key-value pairs
+  - Example: `{"skill_1": 4, "skill_3": 3}` means worker needs skill_1 ≥ 4 AND skill_3 ≥ 3
+- **duration**: Task duration in minutes (240, 480, or 720)
+- **priority**: Priority level (1=highest, 3=lowest) - for tie-breaking only
+
+### **Workers Array**
+Each worker has:
+- **id**: Worker identifier (1-3)
+- **skills**: Worker's skill levels as key-value pairs
+  - Example: `{"skill_1": 5, "skill_2": 2}` means worker has skill_1 at level 5, skill_2 at level 2
+
+---
+
+## **ESSENTIAL CONSTRAINTS (Must be satisfied)**
+
+### **1. SKILL MATCHING (Most Critical)**
+**Rule**: To be assigned a task, a worker must have all the skills specified in the task’s requirements. For each required skill, the worker’s skill level must be greater than or equal to the task’s required level for that skill. If the worker is missing any required skill, or if their level is below the required level, the assignment is invalid.
+
+**Verification Steps**:
+1. List ALL skills required by the task
+2. For each required skill, check if worker has that skill
+3. For each skill, verify: worker_skill_level ≥ required_skill_level
+4. Worker is eligible ONLY if ALL skill checks pass
+
+**Example**: 
+- Task needs: `{"skill_1": 4, "skill_3": 3}`
+- Worker has: `{"skill_1": 5, "skill_2": 2, "skill_3": 3}`
+- Check: skill_1 (5≥4) ✓, skill_3 (3≥3) ✓ → VALID
+- Worker missing skill_1 or with skill_1 < 4 → INVALID
+
+### **2. WORKER CAPACITY**
+**Rule**: Each worker can work on at most ONE task per time period.
+
+**Example**: If Worker 1 is assigned Task A in period 3, Worker 1 cannot be assigned any other task in period 3.
+
+### **3. TASK UNIQUENESS**
+**Rule**: Each task can be assigned to at most ONE worker.
+
+**Example**: Task 1 cannot be assigned to both Worker 1 and Worker 2.
+
+### **4. MULTI-PERIOD TASK RULES**
+**Rule**: Tasks requiring multiple periods must be assigned consecutively to the same worker.
+
+**Duration Conversion**:
+- 240 minutes = 1 period
+- 480 minutes = 2 consecutive periods  
+- 720 minutes = 3 consecutive periods
+
+**Example**: Task 4 (480 minutes) assigned to Worker 2 starting period 3 → Worker 2 works on Task 4 in periods 3 and 4.
+
+---
+
+## **SOLUTION STRATEGY**
+
+### **Step 1: Create Eligible Worker Lists**
+For each task:
+1. List required skills and levels
+2. Check each worker using skill verification steps above
+3. Create list of eligible workers for this task
+4. If no eligible workers exist, mark task as unassignable
+
+### **Step 2: Assign Tasks**
+1. Start with highest priority tasks (priority 1 first)
+2. For each task, try to assign to an eligible worker
+3. Find available consecutive time periods for the worker
+4. Assign task if all constraints are satisfied
+
+### **Step 3: Verify Solution**
+1. Check each assignment satisfies skill requirements
+2. Verify no worker conflicts (same worker, same period)
+3. Confirm each task assigned to only one worker
+
+---
+
+## **OUTPUT FORMAT**
+
+Provide your solution as an array of assignments. For each period where a worker works on a task, output:
+**[worker_id, task_id, period_id, 240.0]**
+
+**Examples**:
+- Single period task: Worker 1 does Task 2 (240 minutes) in period 5
+  ```
+  [1, 2, 5, 240.0]
+  ```
+
+- Multi-period task: Worker 3 does Task 4 (480 minutes) starting period 2
+  ```
+  [3, 4, 2, 240.0]
+  [3, 4, 3, 240.0]
+  ```
+
+---
+
+## **KEY REMINDERS**
+
+1. **ALWAYS verify skill matching first** - this is the most common source of errors
+2. **Use the step-by-step skill verification process** for every assignment
+3. **Check for worker conflicts** - same worker cannot work on two tasks in the same period
+4. **Multi-period tasks must be consecutive** - no gaps between periods
+5. **It's OK to leave some tasks unassigned** if no eligible workers are available
+
+**Focus on getting the skill matching right - this is the foundation of a valid solution.** 

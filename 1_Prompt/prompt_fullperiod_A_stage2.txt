@@ -1,0 +1,91 @@
+Based on your strategic analysis from Stage 1, now generate the actual assignment solution in JSON format.
+
+---
+
+## **SOLUTION GENERATION INSTRUCTIONS**
+
+### **Step 1: Extract Assignment Decisions**
+From your strategy analysis, identify:
+1. **Selected Tasks**: Which tasks you decided to assign (vs. leave unassigned)
+2. **Worker Assignments**: Which worker is assigned to each selected task
+3. **Period Assignments**: Which specific periods each task is scheduled for
+4. **Multi-period Scheduling**: For tasks lasting multiple periods, the consecutive period sequence
+
+### **Step 2: Convert to Assignment Tuples**
+For each period where a worker works on a task, create a tuple:
+**[worker_id, task_id, period_id, 240.0]**
+
+**Encoding Rules**:
+- **worker_id**: Integer (worker's ID from input data)
+- **task_id**: Integer (task's ID from input data)  
+- **period_id**: Integer (1-based period number when work occurs)
+- **240.0**: Fixed value representing 240 minutes of work in that period
+
+**Multi-Period Task Encoding**:
+- Create separate tuple for each period of the task
+- Use consecutive period_ids
+- Keep same worker_id and task_id across all periods
+
+**Examples**:
+- **Single-period task**: Worker 2 does Task 5 (1 period) in period 8
+  ```
+  [2, 5, 8, 240.0]
+  ```
+
+- **Multi-period task**: Worker 1 does Task 3 (3 periods) starting period 4
+  ```
+  [1, 3, 4, 240.0]
+  [1, 3, 5, 240.0] 
+  [1, 3, 6, 240.0]
+  ```
+
+### **Step 3: Systematic Constraint Verification**
+
+Before finalizing, verify each constraint:
+
+**✓ Task Assignment Constraint**:
+- Each task appears with at most one worker_id
+- No task assigned to multiple workers
+
+**✓ Skill Matching Constraint**:
+- For each assignment, confirm assigned worker has all required skills
+- Verify skill levels meet or exceed task requirements
+
+**✓ Worker Capacity Constraint**:
+- For each period, each worker appears at most once
+- No worker double-booked in same period
+
+**✓ Worker Workload Bounds**:
+- Count total periods for each worker across all assignments
+- Calculate: available_periods = total_periods - len(unavailable), min_periods = min_utilisation × available_periods, max_periods = max_utilisation × available_periods
+- Verify: min_periods ≤ actual_periods ≤ max_periods
+
+**✓ Multi-Period Task Constraint**:
+- Tasks with duration > 240 minutes have correct number of consecutive assignments
+- Same worker_id used for all periods of same task
+
+**✓ Precedence Constraint**:
+- For each precedence relationship (A → B), verify A's last period < B's first period
+- Check all predecessor-successor pairs
+
+---
+
+## **OUTPUT REQUIREMENTS**
+
+Generate the assignment solution as a JSON object with your worker-task-period assignments.
+
+**Assignment Format**:
+Each assignment is a 4-element array: `[worker_id, task_id, period_id, 240.0]`
+
+**Example**:
+```json
+{
+  "worker_task_period_assignments": [
+    [1, 2, 3, 240.0],
+    [1, 2, 4, 240.0],
+    [2, 1, 5, 240.0]
+  ]
+}
+```
+
+Generate your solution now based on the strategy you developed in Stage 1.

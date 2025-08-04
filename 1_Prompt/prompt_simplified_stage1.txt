@@ -1,0 +1,95 @@
+You are given a workforce-task assignment problem. The goal is to **assign tasks to workers** while satisfying **essential constraints**. 
+
+**CRITICAL**: Any assignment that violates the constraints below is INVALID.
+
+---
+
+## **Problem Setup**
+
+- **5 tasks** need to be assigned to **3 workers** over **10 time periods**
+- Each time period lasts **240 minutes**
+- Tasks have different durations: 240, 480, or 720 minutes
+- Tasks requiring multiple periods must be assigned to the same worker in consecutive periods
+- If no workers satisfy all skill requirements for a task, it is acceptable to leave the task unassigned
+
+---
+
+## **Input Data Structure**
+
+### **Tasks Array**
+Each task has:
+- **id**: Task identifier (1-5)
+- **skills**: Required skill levels as key-value pairs
+  - Example: `{"skill_1": 4, "skill_3": 3}` means worker needs skill_1 ≥ 4 AND skill_3 ≥ 3
+- **duration**: Task duration in minutes (240, 480, or 720)
+- **priority**: Priority level (1=highest, 3=lowest) - for tie-breaking only
+
+### **Workers Array**
+Each worker has:
+- **id**: Worker identifier (1-3)
+- **skills**: Worker's skill levels as key-value pairs
+  - Example: `{"skill_1": 5, "skill_2": 2}` means worker has skill_1 at level 5, skill_2 at level 2
+
+---
+
+## **ESSENTIAL CONSTRAINTS (Must be satisfied)**
+
+### **1. SKILL MATCHING (Most Critical)**
+**Rule**: To be assigned a task, a worker must have all the skills specified in the task’s requirements. For each required skill, the worker’s skill level must be greater than or equal to the task’s required level for that skill. If the worker is missing any one of required skills of the task, or if their level is below the required level, the assignment is invalid.
+
+**Example**: Task needs `{"skill_1": 4, "skill_3": 3}`
+- Worker with `{"skill_1": 3, "skill_3": 5}` → INVALID (skill_1: 3 < 4)
+- Worker with `{"skill_2": 5}` → INVALID (missing skill_1 and skill_3)
+- Worker with `{"skill_1": 4, "skill_3": 3, "skill_2": 2}` → VALID (skill_1: 4≥4, skill_3: 3≥3)
+
+### **2. WORKER CAPACITY**
+**Rule**: Each worker can work on at most ONE task per time period.
+
+**Example**: If Worker 1 is assigned Task A in period 3, Worker 1 cannot be assigned any other task in period 3.
+
+### **3. TASK UNIQUENESS**
+**Rule**: Each task can be assigned to at most ONE worker.
+
+**Example**: Task 1 cannot be assigned to both Worker 1 and Worker 2.
+
+### **4. MULTI-PERIOD TASK RULES**
+**Rule**: Tasks requiring multiple periods must be assigned consecutively to the same worker.
+
+**Duration Conversion**:
+- 240 minutes = 1 period
+- 480 minutes = 2 consecutive periods  
+- 720 minutes = 3 consecutive periods
+
+**Example**: Task 4 (480 minutes) assigned to Worker 2 starting period 3 → Worker 2 works on Task 4 in periods 3 and 4.
+
+---
+
+## **FIRST STEP: ANALYSIS AND PLANNING**
+
+Based on the input data provided, please:
+
+1. **Analyze each worker's capabilities**:
+   - List each worker's skills and levels
+
+2. **Analyze each task's requirements**:
+   - List ALL skills required by the task
+   - For each required skill, check if worker has that skill
+   - For each skill, verify: worker_skill_level ≥ required_skill_level. 
+   - Worker is eligible ONLY if ALL skill checks pass
+   - Calculate how many periods each task needs
+
+3. **Create eligibility matrix**:
+   - For each task, list which workers are eligible. If no workers satisfy all skill requirements for a task, it is acceptable to leave the task unassigned.
+   - If no workers are eligible, explain why
+
+4. **Identify potential conflicts**:
+   - Are there more tasks than can be completed?
+   - Are there skill bottlenecks?
+   - Any workers that are essential for multiple tasks?
+
+5. **Propose assignment strategy**:
+   - Which tasks should be prioritized?
+   - How to handle conflicts?
+   - Suggested assignment order
+
+**Output a detailed analysis in plain text. Do NOT provide JSON output yet.**
